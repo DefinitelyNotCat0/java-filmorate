@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,7 +38,7 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film createFilm(@RequestBody Film film) {
+    public Film createFilm(@Valid @RequestBody Film film) {
         validate(film);
         film.setId(getNextId());
         filmMap.put(film.getId(), film);
@@ -46,12 +47,12 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
+    public Film updateFilm(@Valid @RequestBody Film film) {
         if (film.getId() == null) {
-            throw new ValidationException("Id должен быть указан");
+            throw new ValidationException("Id must not be empty");
         }
         if (!filmMap.containsKey(film.getId())) {
-            throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
+            throw new NotFoundException("Film not found with id = " + film.getId());
         }
 
         Film oldFilm = filmMap.get(film.getId());
@@ -67,18 +68,9 @@ public class FilmController {
 
     private void validate(Film film) {
         List<String> errors = new ArrayList<>();
-        if (film.getName() == null || film.getName().isBlank()) {
-            errors.add("Название не может быть пустым");
-        }
-        if (film.getDescription() != null && film.getDescription().length() > MAX_AVAILABLE_DESCRIPTION_LENGTH) {
-            errors.add(String.format("Максимальная длина описания — %d символов", MAX_AVAILABLE_DESCRIPTION_LENGTH));
-        }
         if (film.getReleaseDate() != null &&
                 film.getReleaseDate().isBefore(EARLIEST_AVAILABLE_RELEASE_DATE)) {
             errors.add("Дата релиза не может быть раньше " + EARLIEST_AVAILABLE_RELEASE_DATE);
-        }
-        if (film.getDuration() != null && film.getDuration() < 0) {
-            errors.add("Продолжительность фильма должна быть положительным числом");
         }
 
         if (!errors.isEmpty()) {

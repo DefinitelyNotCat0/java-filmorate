@@ -80,40 +80,6 @@ class FilmControllerTest {
                 FilmController.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
                 5);
         assertDoesNotThrow(() -> filmController.createFilm(film));
-        Film filmUpdate = new Film(1L, "Name updated",
-                "-".repeat(FilmController.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                FilmController.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
-                5);
-        assertDoesNotThrow(() -> filmController.updateFilm(filmUpdate));
-
-        // Name
-        Film emptyNameFilm = new Film(null, null, film.getDescription(),
-                film.getReleaseDate(), film.getDuration());
-        assertThrows(ValidationException.class, () -> filmController.createFilm(emptyNameFilm));
-        emptyNameFilm.setId(1L);
-        assertThrows(ValidationException.class, () -> filmController.updateFilm(emptyNameFilm));
-
-        Film filmDescriptionMaxAvailableLengthEqual = new Film(null, film.getName(),
-                "a".repeat(FilmController.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                film.getReleaseDate(), film.getDuration());
-        assertDoesNotThrow(() -> filmController.createFilm(filmDescriptionMaxAvailableLengthEqual));
-        filmDescriptionMaxAvailableLengthEqual.setId(1L);
-        assertDoesNotThrow(() -> filmController.updateFilm(filmDescriptionMaxAvailableLengthEqual));
-
-        // Description
-        Film filmDescriptionMaxAvailableLengthMore = new Film(null, film.getName(),
-                "a".repeat(FilmController.MAX_AVAILABLE_DESCRIPTION_LENGTH + 1),
-                film.getReleaseDate(), film.getDuration());
-        assertThrows(ValidationException.class, () -> filmController.createFilm(filmDescriptionMaxAvailableLengthMore));
-        filmDescriptionMaxAvailableLengthMore.setId(1L);
-        assertThrows(ValidationException.class, () -> filmController.updateFilm(filmDescriptionMaxAvailableLengthMore));
-
-        Film filmDescriptionMaxAvailableLengthLess = new Film(null, film.getName(),
-                "a".repeat(FilmController.MAX_AVAILABLE_DESCRIPTION_LENGTH - 1),
-                film.getReleaseDate(), film.getDuration());
-        assertDoesNotThrow(() -> filmController.createFilm(filmDescriptionMaxAvailableLengthLess));
-        filmDescriptionMaxAvailableLengthLess.setId(1L);
-        assertDoesNotThrow(() -> filmController.updateFilm(filmDescriptionMaxAvailableLengthLess));
 
         // Release Date
         Film filmEarliestAvailableReleaseDateEqual = new Film(null, film.getName(), film.getDescription(),
@@ -136,27 +102,5 @@ class FilmControllerTest {
         assertThrows(ValidationException.class, () -> filmController.createFilm(filmEarliestAvailableReleaseDateLess));
         filmEarliestAvailableReleaseDateLess.setId(1L);
         assertThrows(ValidationException.class, () -> filmController.updateFilm(filmEarliestAvailableReleaseDateLess));
-
-        // Duration
-        Film filmZeroDuration = new Film(null, film.getName(), film.getDescription(),
-                film.getReleaseDate(),
-                0);
-        assertDoesNotThrow(() -> filmController.createFilm(filmZeroDuration));
-        filmZeroDuration.setId(1L);
-        assertDoesNotThrow(() -> filmController.updateFilm(filmZeroDuration));
-
-        Film filmPositiveDuration = new Film(null, film.getName(), film.getDescription(),
-                film.getReleaseDate(),
-                5);
-        assertDoesNotThrow(() -> filmController.createFilm(filmPositiveDuration));
-        filmPositiveDuration.setId(1L);
-        assertDoesNotThrow(() -> filmController.updateFilm(filmPositiveDuration));
-
-        Film filmNegativeDuration = new Film(null, film.getName(), film.getDescription(),
-                film.getReleaseDate(),
-                -1);
-        assertThrows(ValidationException.class, () -> filmController.createFilm(filmNegativeDuration));
-        filmNegativeDuration.setId(1L);
-        assertThrows(ValidationException.class, () -> filmController.updateFilm(filmNegativeDuration));
     }
 }

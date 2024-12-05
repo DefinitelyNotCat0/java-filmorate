@@ -1,15 +1,11 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,7 +31,6 @@ public class UserController {
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
-        validate(user);
         user.setId(getNextId());
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
@@ -48,15 +43,13 @@ public class UserController {
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         if (user.getId() == null) {
-            throw new ValidationException("Id должен быть указан");
+            throw new ValidationException("Id must not be empty");
         }
         if (!userMap.containsKey(user.getId())) {
-            throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
+            throw new NotFoundException("User not found with id = " + user.getId());
         }
 
         User oldUser = userMap.get(user.getId());
-        validate(user);
-
         oldUser.setEmail(user.getEmail());
         oldUser.setLogin(user.getLogin());
         if (user.getName() == null || user.getName().isBlank()) {
@@ -67,28 +60,6 @@ public class UserController {
         oldUser.setBirthday(user.getBirthday());
         log.debug("user updated");
         return oldUser;
-    }
-
-    private void validate(User user) throws ValidationException {
-        List<String> errors = new ArrayList<>();
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            errors.add("Почта не может быть пустой");
-        }
-        if (user.getEmail() != null && !user.getEmail().contains("@")) {
-            errors.add("Неверный формат почты");
-        }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            errors.add("Логине не должен быть пустым или соддержать пробелы");
-        }
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            errors.add("Дата рождения не может быть в будущем");
-        }
-
-        if (!errors.isEmpty()) {
-            String errorMessage = StringUtils.arrayToDelimitedString(errors.toArray(), ";");
-            log.error(errorMessage);
-            throw new ValidationException(errorMessage);
-        }
     }
 
     private long getNextId() {

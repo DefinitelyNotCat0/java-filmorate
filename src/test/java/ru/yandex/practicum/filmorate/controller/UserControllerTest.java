@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -65,52 +64,5 @@ class UserControllerTest {
         assertThrows(NotFoundException.class, () -> userController.updateUser(secondUserUpdate));
         secondUserUpdate.setId(null);
         assertThrows(ValidationException.class, () -> userController.updateUser(secondUserUpdate));
-    }
-
-    @Test
-    void validationTest() {
-        User user = new User(null, "email@gmail.com", "Login",
-                "name",
-                LocalDate.now().minusYears(20).minusMonths(3).minusDays(12));
-        assertDoesNotThrow(() -> userController.createUser(user));
-        User userUpdate = new User(1L, "email_updated@gmail.com",
-                "Login_updated", "Name updated",
-                LocalDate.now().minusMonths(2));
-        assertDoesNotThrow(() -> userController.updateUser(userUpdate));
-
-        // Email
-        User emptyEmailUser = new User(null, null, user.getLogin(), user.getName(), user.getBirthday());
-        assertThrows(ValidationException.class, () -> userController.createUser(emptyEmailUser));
-        emptyEmailUser.setId(1L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(emptyEmailUser));
-
-        User incorrectEmailUser = new User(null, "123", user.getLogin(), user.getName(), user.getBirthday());
-        assertThrows(ValidationException.class, () -> userController.createUser(emptyEmailUser));
-        incorrectEmailUser.setId(1L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(incorrectEmailUser));
-
-        // Login
-        User emptyLoginUser = new User(null, user.getEmail(), "", user.getName(), user.getBirthday());
-        assertThrows(ValidationException.class, () -> userController.createUser(emptyLoginUser));
-        emptyLoginUser.setId(1L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(emptyLoginUser));
-
-        User loginWithSpacesUser = new User(null, user.getEmail(), "1 1", user.getName(), user.getBirthday());
-        assertThrows(ValidationException.class, () -> userController.createUser(loginWithSpacesUser));
-        loginWithSpacesUser.setId(1L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(loginWithSpacesUser));
-
-        // Birthday
-        User birthdayPastUser = new User(null, user.getEmail(), user.getLogin(), user.getName(),
-                LocalDate.now().minusYears(15));
-        assertDoesNotThrow(() -> userController.createUser(birthdayPastUser));
-        birthdayPastUser.setId(1L);
-        assertDoesNotThrow(() -> userController.updateUser(birthdayPastUser));
-
-        User birthdayFutureUser = new User(null, user.getEmail(), user.getLogin(), user.getName(),
-                LocalDate.now().plusDays(2));
-        assertThrows(ValidationException.class, () -> userController.createUser(birthdayFutureUser));
-        birthdayFutureUser.setId(1L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(birthdayFutureUser));
     }
 }
