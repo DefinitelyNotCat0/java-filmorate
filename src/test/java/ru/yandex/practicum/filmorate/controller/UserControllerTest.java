@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,7 +21,9 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = new UserController();
+        UserStorage userStorage = new InMemoryUserStorage();
+        UserService userService = new UserService(userStorage);
+        userController = new UserController(userService);
 
         User user = new User(null, "email@gmail.com", "Login",
                 "name",
@@ -64,5 +69,35 @@ class UserControllerTest {
         assertThrows(NotFoundException.class, () -> userController.updateUser(secondUserUpdate));
         secondUserUpdate.setId(null);
         assertThrows(ValidationException.class, () -> userController.updateUser(secondUserUpdate));
+    }
+
+    @Test
+    void friendsTest() {
+        assertEquals(1, userController.getUsers().size());
+        User firstUser = new User(null, "email1@gmail.com", "Login1",
+                "name1",
+                LocalDate.now().minusYears(36));
+        userController.createUser(firstUser);
+        User firstCreatedUser = userController.getUsers().stream().skip(1).findFirst().orElse(new User());
+
+        User secondUser = new User(null, "email2@gmail.com", "Login2",
+                "name2",
+                LocalDate.now().minusYears(26));
+        userController.createUser(secondUser);
+        User secondCreatedUser = userController.getUsers().stream().skip(2).findFirst().orElse(new User());
+
+        userController.addFriend(1L, firstCreatedUser.getId());
+        assertEquals(1, userController.getFriendsByUserId(1L).size());
+
+        userController.addFriend(1L, secondCreatedUser.getId());
+        assertEquals(2, userController.getFriendsByUserId(1L).size());
+
+        userController.addFriend(firstCreatedUser.getId(), secondCreatedUser.getId());
+        assertEquals(1, userController.getMutualFriends(1L, firstCreatedUser.getId()).size());
+        assertEquals(userController.getUserById(secondCreatedUser.getId()),
+                userController.getMutualFriends(1L, firstCreatedUser.getId()).getFirst());
+
+        userController.removeFriend(1L, secondCreatedUser.getId());
+        assertEquals(1, userController.getFriendsByUserId(1L).size());
     }
 }
