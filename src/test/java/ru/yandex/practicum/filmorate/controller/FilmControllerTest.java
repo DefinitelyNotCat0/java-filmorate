@@ -11,7 +11,9 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.UserServiceImpl;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
@@ -30,13 +32,13 @@ class FilmControllerTest {
     void setUp() {
         FilmStorage filmStorage = new InMemoryFilmStorage();
         UserStorage userStorage = new InMemoryUserStorage();
-        FilmService filmService = new FilmService(filmStorage, userStorage);
+        FilmService filmService = new FilmServiceImpl(filmStorage, userStorage);
         filmController = new FilmController(filmService);
-        userService = new UserService(userStorage);
+        userService = new UserServiceImpl(userStorage);
 
         Film film = new Film(null, "Name",
-                "-".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE
+                "-".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE
                         .plusYears(10)
                         .plusMonths(5)
                         .plusDays(10),
@@ -48,8 +50,8 @@ class FilmControllerTest {
     void createUpdateAndGetFilms() {
         assertEquals(1, filmController.getFilms().size());
         Film firstFilm = new Film(null, "Name 1",
-                "1".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
+                "1".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
                 5);
         filmController.createFilm(firstFilm);
         assertEquals(2, filmController.getFilms().size());
@@ -58,8 +60,8 @@ class FilmControllerTest {
         assertEquals(2, firstCreatedFilm.getId());
 
         Film secondFilm = new Film(null, "Name 2",
-                "2".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(25).plusMonths(6),
+                "2".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(25).plusMonths(6),
                 28);
         filmController.createFilm(secondFilm);
         assertEquals(3, filmController.getFilms().size());
@@ -68,7 +70,7 @@ class FilmControllerTest {
         assertEquals(3, secondCreatedFilm.getId());
 
         Film firstFilmUpdate = new Film(firstCreatedFilm.getId(), "Name 1 updated",
-                "u".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                "u".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
                 firstCreatedFilm.getReleaseDate().plusMonths(2),
                 8);
         filmController.updateFilm(firstFilmUpdate);
@@ -80,7 +82,7 @@ class FilmControllerTest {
         Film secondFilmUpdate = new Film(
                 (long) (filmController.getFilms().size() + 1),
                 "Name 2 updated",
-                "u".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                "u".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
                 secondCreatedFilm.getReleaseDate().plusMonths(2),
                 8);
         assertThrows(NotFoundException.class, () -> filmController.updateFilm(secondFilmUpdate));
@@ -91,28 +93,28 @@ class FilmControllerTest {
     @Test
     void validationTest() {
         Film film = new Film(null, "Name 1",
-                "-".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
+                "-".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
                 5);
         assertDoesNotThrow(() -> filmController.createFilm(film));
 
         // Release Date
         Film filmEarliestAvailableReleaseDateEqual = new Film(null, film.getName(), film.getDescription(),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE,
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE,
                 film.getDuration());
         assertDoesNotThrow(() -> filmController.createFilm(filmEarliestAvailableReleaseDateEqual));
         filmEarliestAvailableReleaseDateEqual.setId(1L);
         assertDoesNotThrow(() -> filmController.updateFilm(filmEarliestAvailableReleaseDateEqual));
 
         Film filmEarliestAvailableReleaseDateMore = new Film(null, film.getName(), film.getDescription(),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE.plusDays(1),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE.plusDays(1),
                 film.getDuration());
         assertDoesNotThrow(() -> filmController.createFilm(filmEarliestAvailableReleaseDateMore));
         filmEarliestAvailableReleaseDateMore.setId(1L);
         assertDoesNotThrow(() -> filmController.updateFilm(filmEarliestAvailableReleaseDateMore));
 
         Film filmEarliestAvailableReleaseDateLess = new Film(null, film.getName(), film.getDescription(),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE.minusDays(1),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE.minusDays(1),
                 film.getDuration());
         assertThrows(ValidationException.class, () -> filmController.createFilm(filmEarliestAvailableReleaseDateLess));
         filmEarliestAvailableReleaseDateLess.setId(1L);
@@ -139,8 +141,8 @@ class FilmControllerTest {
                 filmController.getFilmById(1L).getLikes().stream().toList().getFirst());
 
         Film firstFilm = new Film(null, "Name 1",
-                "1".repeat(FilmService.MAX_AVAILABLE_DESCRIPTION_LENGTH),
-                FilmService.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
+                "1".repeat(FilmServiceImpl.MAX_AVAILABLE_DESCRIPTION_LENGTH),
+                FilmServiceImpl.EARLIEST_AVAILABLE_RELEASE_DATE.plusYears(20).plusDays(10),
                 5);
         filmController.createFilm(firstFilm);
         Film firstCreatedFilm = filmController.getFilmById(2L);
