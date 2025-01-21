@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -29,9 +28,7 @@ public class FilmServiceImpl implements FilmService {
     public static final LocalDate EARLIEST_AVAILABLE_RELEASE_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
     public static final Integer GET_FIRST_FILMS_LIMIT = 10;
 
-    @Qualifier("filmRepository")
     private final FilmStorage filmStorage;
-    @Qualifier("userRepository")
     private final UserStorage userStorage;
     private final MpaRepository mpaRepository;
     private final GenreRepository genreRepository;

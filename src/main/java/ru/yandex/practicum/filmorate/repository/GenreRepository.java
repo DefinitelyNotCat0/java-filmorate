@@ -66,6 +66,7 @@ public class GenreRepository {
         }).toArray(MapSqlParameterSource[]::new);
 
         jdbc.batchUpdate("insert into films_genres(film_id, genre_id) values(:film_id, :genre_id)", params);
+        log.debug("film genres saved");
     }
 
     public void removeFilmGenres(Long filmId) {
