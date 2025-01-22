@@ -1,21 +1,23 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.repository.FilmStorage;
+import ru.yandex.practicum.filmorate.repository.GenreRepository;
+import ru.yandex.practicum.filmorate.repository.MpaRepository;
+import ru.yandex.practicum.filmorate.repository.UserStorage;
+
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 @Slf4j
 @Service
@@ -28,22 +30,24 @@ public class FilmServiceImpl implements FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final MpaRepository mpaRepository;
+    private final GenreRepository genreRepository;
 
     @Override
     public Film getFilmById(Long id) {
-        return filmStorage.getFilmById(id)
+        return filmStorage.getById(id)
                 .orElseThrow(() -> new NotFoundException("Film not found with id = " + id));
     }
 
     @Override
     public Collection<Film> getFilms() {
-        return filmStorage.getFilms();
+        return filmStorage.getAll();
     }
 
     @Override
     public Film createFilm(Film film) {
         validate(film);
-        return filmStorage.createFilm(film);
+        return filmStorage.save(film);
     }
 
     @Override
@@ -51,20 +55,20 @@ public class FilmServiceImpl implements FilmService {
         if (film.getId() == null) {
             throw new ValidationException("Id must not be empty");
         }
-        if (!filmStorage.doesFilmExist(film.getId())) {
+        if (!filmStorage.exists(film.getId())) {
             throw new NotFoundException("Film not found with id = " + film.getId());
         }
 
         validate(film);
-        return filmStorage.updateFilm(film);
+        return filmStorage.update(film);
     }
 
     @Override
     public void addLike(Long id, Long userId) {
-        if (!filmStorage.doesFilmExist(id)) {
+        if (!filmStorage.exists(id)) {
             throw new NotFoundException("Film not found with id = " + id);
         }
-        if (!userStorage.doesUserExist(userId)) {
+        if (!userStorage.exists(userId)) {
             throw new NotFoundException("User not found with id = " + userId);
         }
 
@@ -73,10 +77,10 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public void removeLike(Long id, Long userId) {
-        if (!filmStorage.doesFilmExist(id)) {
+        if (!filmStorage.exists(id)) {
             throw new NotFoundException("Film not found with id = " + id);
         }
-        if (!userStorage.doesUserExist(userId)) {
+        if (!userStorage.exists(userId)) {
             throw new NotFoundException("User not found with id = " + userId);
         }
 
@@ -101,11 +105,28 @@ public class FilmServiceImpl implements FilmService {
                 film.getReleaseDate().isBefore(EARLIEST_AVAILABLE_RELEASE_DATE)) {
             errors.add("Дата релиза не может быть раньше " + EARLIEST_AVAILABLE_RELEASE_DATE);
         }
+        if (!mpaRepository.exists(film.getMpa().getId())) {
+            errors.add("Mpa not found with id = " + film.getMpa().getId());
+        }
 
+        validateGenres(film, errors);
         if (!errors.isEmpty()) {
             String errorMessage = StringUtils.arrayToDelimitedString(errors.toArray(), ";");
             log.error(errorMessage);
             throw new ValidationException(errorMessage);
+        }
+    }
+
+    private void validateGenres(Film film, List<String> errors) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            List<Integer> existingGenreIds = genreRepository.getAll().stream().map(Genre::getId).toList();
+            List<Genre> nonExistingGenreIds = film.getGenres().stream()
+                    .filter(genre -> !existingGenreIds.contains(genre.getId()))
+                    .toList();
+
+            if (!nonExistingGenreIds.isEmpty()) {
+                errors.add("Genres not found with ids = " + nonExistingGenreIds);
+            }
         }
     }
 }
